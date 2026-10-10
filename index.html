@@ -47,6 +47,7 @@
             overflow: hidden;
         }
         .cell span { font-size: 6pt; font-weight: 500; color: #222; margin-top: 0.4mm; line-height: 1; letter-spacing: -0.2px; }
+        .cell span.small { color: #d00000; font-weight: 700; }
         .pair { background: #b5b5b5; }
         .suited { background: #e4e4e4; }
         .offsuit { background: #ffffff; }
@@ -158,7 +159,9 @@
                     cell.className = `cell ${type}`;
                 }
 
-                cell.innerHTML = `${hand}<br><span>${value}</span>`;
+                const blinds = parseFloat(value);
+                const small = value !== '-' && !Number.isNaN(blinds) && blinds <= 7;
+                cell.innerHTML = `${hand}<br><span${small ? ' class="small"' : ''}>${value}</span>`;
                 grid.appendChild(cell);
             }
         }
