@@ -5,45 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nash HU Push/Fold (20BB cap)</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #fff; margin: 0; padding: 20px; }
-        h1 { margin-bottom: 5px; font-size: 24px; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 40px; page-break-inside: avoid; }
-        .grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; width: 100%; max-width: 800px; background: #333; border: 2px solid #333; }
-        .cell { aspect-ratio: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; background: #f0f0f0; border-radius: 2px; color: #111; }
-        .cell span { font-size: 9px; font-weight: normal; color: #444; margin-top: 2px; line-height: 1.05; text-align: center; }
-        .note { max-width: 800px; margin: 8px auto 0; font-size: 13px; line-height: 1.4; color: #333; text-align: left; }
-        h1 { margin-bottom: 2px; }
-        .sub { margin: 0 0 8px; color: #555; font-size: 13px; }
-        
-        /* Culori inspirate din softurile de GTO */
-        .pair { background-color: #a3d9a5; } /* Verde - Perechi */
-        .suited { background-color: #a3c4f3; } /* Albastru - Suited */
-        .offsuit { background-color: #f7d794; } /* Galben/Portocaliu - Offsuit */
-        .fold { background-color: #e0e0e0; color: #888; } /* Gri - Fold 100% / valori f mici */
-        
+        @page { size: A4 landscape; margin: 0; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        html, body { margin: 0; background: #e6e6e6; color: #111; font-family: Arial, Helvetica, sans-serif; }
+        .hint { margin: 8px 12px; font-size: 13px; color: #333; }
+        .sheet {
+            width: 297mm;
+            height: 210mm;
+            margin: 0 auto;
+            padding: 4mm 5mm 3.5mm;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+        header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 1.5mm; }
+        h1 { margin: 0; font-size: 13pt; letter-spacing: 0.02em; }
+        .sub { margin: 0; font-size: 8pt; color: #333; }
+        .boards { flex: 1; display: flex; gap: 4mm; min-height: 0; }
+        section { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+        h2 { margin: 0 0 1mm; font-size: 11pt; letter-spacing: 0.06em; }
+        .grid {
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            grid-template-rows: repeat(13, 1fr);
+            gap: 0.35mm;
+            background: #111;
+            border: 0.45mm solid #111;
+        }
+        .cell {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            color: #111;
+            font-size: 8.2pt;
+            font-weight: 700;
+            line-height: 1;
+            overflow: hidden;
+        }
+        .cell span { font-size: 6pt; font-weight: 500; color: #222; margin-top: 0.4mm; line-height: 1; letter-spacing: -0.2px; }
+        .pair { background: #b5b5b5; }
+        .suited { background: #e4e4e4; }
+        .offsuit { background: #ffffff; }
+        .fold { background: #f3f3f3; color: #666; }
+        .fold span { color: #666; }
+        footer { margin-top: 1.4mm; font-size: 7.2pt; line-height: 1.25; color: #222; display: flex; gap: 4mm; align-items: flex-start; }
+        .legend { display: flex; gap: 3mm; white-space: nowrap; }
+        .swatch { display: inline-block; width: 3.2mm; height: 3.2mm; border: 0.3mm solid #111; vertical-align: -0.4mm; margin-right: 1mm; }
+        .note { flex: 1; text-align: left; }
+        @media screen and (max-width: 1100px) {
+            .sheet { width: 100%; height: auto; aspect-ratio: 297 / 210; }
+        }
         @media print {
-            body { padding: 0; }
-            .container { gap: 20px; }
-            h1 { font-size: 20px; }
-            .grid { max-width: 100%; }
+            html, body { background: #fff; }
+            .hint { display: none; }
+            .sheet { width: 297mm; height: 210mm; margin: 0; box-shadow: none; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div>
-        <h1>NASH PUSH (Max BB to Push)</h1>
-        <p class="sub">No ante, cap 20BB. Sursă: holdemresources.net/hune</p>
-        <div class="grid" id="pushGrid"></div>
-        <p class="note">Mâini cu gol în strategie: <b>63s</b> push doar între 5.1 și 7.1 BB, și sub 2.3 BB. <b>53s</b> între 3.8 și 12.9 BB, și sub 2.4 BB. <b>43s</b> între 4.9 și 10.0 BB, și sub 2.2 BB.</p>
+<p class="hint">La print alege coala A4 și orientarea Landscape. Pagina e deja pe orizontală.</p>
+<div class="sheet">
+    <header>
+        <h1>NASH HU PUSH / CALL</h1>
+        <p class="sub">No ante · max BB · cap 20 · holdemresources.net/hune</p>
+    </header>
+    <div class="boards">
+        <section>
+            <h2>PUSH</h2>
+            <div class="grid" id="pushGrid"></div>
+        </section>
+        <section>
+            <h2>CALL</h2>
+            <div class="grid" id="callGrid"></div>
+        </section>
     </div>
-    
-    <div>
-        <h1>NASH CALL (Max BB to Call)</h1>
-        <p class="sub">No ante, cap 20BB. Sursă: holdemresources.net/hune</p>
-        <div class="grid" id="callGrid"></div>
-    </div>
+    <footer>
+        <div class="legend">
+            <span><i class="swatch pair"></i>Perechi</span>
+            <span><i class="swatch suited"></i>Suited</span>
+            <span><i class="swatch offsuit"></i>Offsuit</span>
+        </div>
+        <p class="note">Goluri la push: <b>63s</b> doar 5.1–7.1 BB și sub 2.3 BB. <b>53s</b> doar 3.8–12.9 BB și sub 2.4 BB. <b>43s</b> doar 4.9–10.0 BB și sub 2.2 BB.</p>
+    </footer>
 </div>
 
 <script>
