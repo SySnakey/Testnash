@@ -1,1 +1,118 @@
-hello
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nash HU Push/Fold (20BB cap)</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #fff; margin: 0; padding: 20px; }
+        h1 { margin-bottom: 5px; font-size: 24px; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 40px; page-break-inside: avoid; }
+        .grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; width: 100%; max-width: 800px; background: #333; border: 2px solid #333; }
+        .cell { aspect-ratio: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; background: #f0f0f0; border-radius: 2px; color: #111; }
+        .cell span { font-size: 10px; font-weight: normal; color: #444; margin-top: 2px; }
+        
+        /* Culori inspirate din softurile de GTO */
+        .pair { background-color: #a3d9a5; } /* Verde - Perechi */
+        .suited { background-color: #a3c4f3; } /* Albastru - Suited */
+        .offsuit { background-color: #f7d794; } /* Galben/Portocaliu - Offsuit */
+        .fold { background-color: #e0e0e0; color: #888; } /* Gri - Fold 100% / valori f mici */
+        
+        @media print {
+            body { padding: 0; }
+            .container { gap: 20px; }
+            h1 { font-size: 20px; }
+            .grid { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div>
+        <h1>NASH PUSH (Max BB to Push)</h1>
+        <div class="grid" id="pushGrid"></div>
+    </div>
+    
+    <div>
+        <h1>NASH CALL (Max BB to Call)</h1>
+        <div class="grid" id="callGrid"></div>
+    </div>
+</div>
+
+<script>
+    const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+    
+    // Valorile standard Nash HU (20 cap) extrase pentru PUSH
+    const pushValues = {
+        "AA":"20+", "AKs":"20+", "AQs":"20+", "AJs":"20+", "ATs":"20+", "A9s":"20+", "A8s":"20+", "A7s":"20+", "A6s":"20+", "A5s":"20+", "A4s":"20+", "A3s":"20+", "A2s":"20+",
+        "AKo":"20+", "KK":"20+", "KQs":"20+", "KJs":"20+", "KTs":"20+", "K9s":"20+", "K8s":"20+", "K7s":"20+", "K6s":"20+", "K5s":"20+", "K4s":"20+", "K3s":"20+", "K2s":"20+",
+        "AQo":"20+", "KQo":"20+", "QQ":"20+", "QJs":"20+", "QTs":"20+", "Q9s":"20+", "Q8s":"20+", "Q7s":"20+", "Q6s":"20+", "Q5s":"20+", "Q4s":"20+", "Q3s":"20+", "Q2s":"20+",
+        "AJo":"20+", "KJo":"20+", "QJo":"20+", "JJ":"20+", "JTs":"20+", "J9s":"20+", "J8s":"20+", "J7s":"20+", "J6s":"20+", "J5s":"20+", "J4s":"20+", "J3s":"18.0", "J2s":"14.5",
+        "ATo":"20+", "KTo":"20+", "QTo":"20+", "JTo":"20+", "TT":"20+", "T9s":"20+", "T8s":"20+", "T7s":"20+", "T6s":"20+", "T5s":"17.5", "T4s":"13.5", "T3s":"10.7", "T2s":"8.7",
+        "A9o":"20+", "K9o":"20+", "Q9o":"20+", "J9o":"20+", "T9o":"20+", "99":"20+", "98s":"20+", "97s":"19.3", "96s":"13.7", "95s":"10.5", "94s":"8.3", "93s":"6.8", "92s":"5.6",
+        "A8o":"20+", "K8o":"20+", "Q8o":"20+", "J8o":"20+", "T8o":"13.6", "98o":"7.5", "88":"20+", "87s":"11.8", "86s":"8.7", "85s":"6.9", "84s":"5.6", "83s":"4.7", "82s":"3.9",
+        "A7o":"20+", "K7o":"20+", "Q7o":"20+", "J7o":"20+", "T7o":"9.7", "97o":"5.8", "87o":"4.1", "77":"20+", "76s":"6.1", "75s":"4.8", "74s":"4.0", "73s":"3.4", "72s":"2.9",
+        "A6o":"20+", "K6o":"20+", "Q6o":"20+", "J6o":"14.3", "T6o":"7.5", "96o":"4.7", "86o":"3.4", "76o":"2.5", "66":"20+", "65s":"3.6", "64s":"3.0", "63s":"2.6", "62s":"2.3",
+        "A5o":"20+", "K5o":"20+", "Q5o":"20+", "J5o":"10.7", "T5o":"6.1", "95o":"4.0", "85o":"2.9", "75o":"2.2", "65o":"1.8", "55":"20+", "54s":"2.5", "53s":"2.2", "52s":"2.0",
+        "A4o":"20+", "K4o":"20+", "Q4o":"16.4", "J4o":"8.4", "T4o":"5.1", "94o":"3.5", "84o":"2.6", "74o":"2.0", "64o":"1.6", "54o":"1.4", "44":"20+", "43s":"2.0", "42s":"1.8",
+        "A3o":"20+", "K3o":"20+", "Q3o":"12.2", "J3o":"6.9", "T3o":"4.4", "93o":"3.1", "83o":"2.3", "73o":"1.8", "63o":"1.5", "53o":"1.3", "43o":"1.2", "33":"20+", "32s":"1.6",
+        "A2o":"20+", "K2o":"20+", "Q2o":"9.5", "J2o":"5.8", "T2o":"3.8", "92o":"2.7", "82o":"2.1", "72o":"1.6", "62o":"1.4", "52o":"1.2", "42o":"1.1", "32o":"1.0", "22":"20+"
+    };
+
+    // Valorile standard Nash HU (20 cap) extrase pentru CALL
+    const callValues = {
+        "AA":"20+", "AKs":"20+", "AQs":"20+", "AJs":"20+", "ATs":"20+", "A9s":"20+", "A8s":"20+", "A7s":"20+", "A6s":"20+", "A5s":"20+", "A4s":"20+", "A3s":"20+", "A2s":"20+",
+        "AKo":"20+", "KK":"20+", "KQs":"20+", "KJs":"20+", "KTs":"20+", "K9s":"20+", "K8s":"20+", "K7s":"16.7", "K6s":"15.3", "K5s":"14.3", "K4s":"13.4", "K3s":"12.8", "K2s":"12.3",
+        "AQo":"20+", "KQo":"20+", "QQ":"20+", "QJs":"20+", "QTs":"20+", "Q9s":"20+", "Q8s":"15.3", "Q7s":"10.7", "Q6s":"9.0", "Q5s":"8.1", "Q4s":"7.5", "Q3s":"7.0", "Q2s":"6.7",
+        "AJo":"20+", "KJo":"20+", "QJo":"20+", "JJ":"20+", "JTs":"20+", "J9s":"17.8", "J8s":"10.4", "J7s":"7.5", "J6s":"5.8", "J5s":"4.8", "J4s":"4.2", "J3s":"3.7", "J2s":"3.4",
+        "ATo":"20+", "KTo":"20+", "QTo":"20+", "JTo":"17.2", "TT":"20+", "T9s":"12.8", "T8s":"8.0", "T7s":"5.7", "T6s":"4.3", "T5s":"3.4", "T4s":"2.9", "T3s":"2.4", "T2s":"2.1",
+        "A9o":"20+", "K9o":"20+", "Q9o":"17.7", "J9o":"11.0", "T9o":"7.8", "99":"20+", "98s":"7.1", "97s":"5.0", "96s":"3.6", "95s":"2.8", "94s":"2.2", "93s":"1.8", "92s":"1.6",
+        "A8o":"20+", "K8o":"18.4", "Q8o":"9.9", "J8o":"6.6", "T8o":"5.1", "98o":"4.5", "88":"20+", "87s":"4.8", "86s":"3.3", "85s":"2.5", "84s":"1.9", "83s":"1.5", "82s":"1.2",
+        "A7o":"20+", "K7o":"11.3", "Q7o":"6.8", "J7o":"4.8", "T7o":"3.7", "97o":"3.2", "87o":"3.0", "77":"20+", "76s":"3.4", "75s":"2.4", "74s":"1.8", "73s":"1.4", "72s":"1.1",
+        "A6o":"20+", "K6o":"9.6", "Q6o":"5.6", "J6o":"3.8", "T6o":"2.8", "96o":"2.4", "86o":"2.2", "76o":"2.2", "66":"20+", "65s":"2.6", "64s":"1.9", "63s":"1.4", "62s":"1.1",
+        "A5o":"20+", "K5o":"8.9", "Q5o":"5.0", "J5o":"3.2", "T5o":"2.3", "95o":"1.9", "85o":"1.7", "75o":"1.6", "65o":"1.7", "55":"20+", "54s":"2.1", "53s":"1.5", "52s":"1.1",
+        "A4o":"20+", "K4o":"8.2", "Q4o":"4.5", "J4o":"2.8", "T4o":"2.0", "94o":"1.5", "84o":"1.3", "74o":"1.2", "64o":"1.2", "54o":"1.4", "44":"20+", "43s":"1.5", "42s":"1.1",
+        "A3o":"20+", "K3o":"7.6", "Q3o":"4.1", "J3o":"2.5", "T3o":"1.7", "93o":"1.3", "83o":"1.1", "73o":"-", "63o":"-", "53o":"1.1", "43o":"1.0", "33":"19.2", "32s":"1.1",
+        "A2o":"20+", "K2o":"7.3", "Q2o":"3.9", "J2o":"2.3", "T2o":"1.5", "92o":"1.1", "82o":"-", "72o":"-", "62o":"-", "52o":"-", "42o":"-", "32o":"-", "22":"13.8"
+    };
+
+    function createGrid(gridId, valuesObj) {
+        const grid = document.getElementById(gridId);
+        for (let r = 0; r < 13; r++) {
+            for (let c = 0; c < 13; c++) {
+                const cell = document.createElement('div');
+                let hand = ranks[r] + ranks[c];
+                let type = '';
+
+                if (r === c) {
+                    type = 'pair';
+                } else if (r < c) {
+                    hand = ranks[r] + ranks[c] + 's';
+                    type = 'suited';
+                } else {
+                    hand = ranks[c] + ranks[r] + 'o';
+                    type = 'offsuit';
+                }
+
+                let value = valuesObj[hand] || '-';
+                
+                // Opțional: dacă valoarea e f mică sau fold (ex: sub 1.1 BB pt Call), o putem face gri
+                if (value === '-' || parseFloat(value) < 1.1) {
+                    cell.className = `cell fold`;
+                } else {
+                    cell.className = `cell ${type}`;
+                }
+
+                cell.innerHTML = `${hand}<br><span>${value}</span>`;
+                grid.appendChild(cell);
+            }
+        }
+    }
+
+    createGrid('pushGrid', pushValues);
+    createGrid('callGrid', callValues);
+</script>
+
+</body>
+</html>
